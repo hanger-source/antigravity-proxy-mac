@@ -1,0 +1,6 @@
+build/AntigravityProxy.app/Contents/MacOS/
+build/AntigravityProxy.app/Contents/Resources/antigravity-proxy-helper
+build/AntigravityProxy.app/Contents/Resources/com.antigravity-proxy.helper.plist
+helper/antigravity-proxy-helper
+antigravity-proxy-mac
+.DS_Store
