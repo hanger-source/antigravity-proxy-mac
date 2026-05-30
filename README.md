@@ -1,16 +1,23 @@
 # Antigravity Proxy (macOS)
 
-macOS 菜单栏工具，通过 TUN + 进程路由规则，**只代理 Antigravity 相关进程**，其余流量直连。
+macOS 菜单栏工具，通过 TUN + 进程/域名路由规则，**只代理指定 App 的流量**，其余流量直连。
 
 ## 原理
 
 ```
 所有流量 → TUN 虚拟网卡 → sing-box 路由判断
-  ├── process_name 匹配 Antigravity → 走代理
+  ├── process_name 匹配（Codex/Antigravity/...）→ 走代理
+  ├── domain_suffix 匹配（openai.com/...）→ 走代理
   └── 其余所有进程 → 直连（不受影响）
 ```
 
-与全局 TUN 代理的区别：`route.final = "direct"`，只有 Antigravity 进程的流量走代理。
+与全局 TUN 代理的区别：`route.final = "direct"`，只有匹配的进程或域名走代理。
+
+## 典型用途
+
+- **Codex App 登录**：Codex 的 OAuth token exchange 不走系统代理，需要 TUN 强制代理
+- **Antigravity IDE**：IDE 相关进程走代理
+- **任何需要翻墙的 GUI App**：配置进程名即可
 
 ## 安装
 
@@ -28,35 +35,47 @@ make install
 
 配置文件：`~/.antigravity-proxy/config.json`
 
+首次启动自动生成默认配置。
+
+### 上游代理模式（推荐）
+
+指向本地已有的代理（V2RayX、Clash 等）：
+
 ```json
 {
-  "proxy": {
+  "upstream": {
+    "type": "socks5",
     "host": "127.0.0.1",
-    "port": 7890,
-    "type": "socks5"
-  }
+    "port": 13658
+  },
+  "target_processes": [
+    "Codex",
+    "Codex Helper",
+    "Codex Helper (Renderer)",
+    "Codex Helper (GPU)",
+    "Codex Helper (Plugin)",
+    "Antigravity",
+    "Antigravity Helper",
+    "Antigravity Helper (Renderer)"
+  ],
+  "target_domains": [
+    "openai.com",
+    "auth.openai.com",
+    "api.openai.com",
+    "chatgpt.com",
+    "oaistatic.com",
+    "oaiusercontent.com"
+  ],
+  "log_level": "info"
 }
 ```
 
-首次启动自动生成默认配置（指向本地 Clash 7890 端口）。
-
-### 配置项
-
-| 字段 | 说明 |
-|---|---|
-| `proxy.host` | 本地代理地址 |
-| `proxy.port` | 本地代理端口 |
-| `proxy.type` | `socks5` 或 `http` |
-| `target_processes` | 自定义要代理的进程名列表（默认已包含 Antigravity 全家桶） |
-| `log_level` | sing-box 日志级别：trace/debug/info/warn/error |
-
 ### 直连节点模式
 
-如果不想依赖本地 Clash，可以直接配置节点：
+不依赖本地代理，直接配置节点：
 
 ```json
 {
-  "proxy": {},
   "nodes": [
     {
       "name": "我的节点",
@@ -66,30 +85,53 @@ make install
       "uuid": "xxx-xxx-xxx"
     }
   ],
-  "selected_node": 0
+  "selected_node": 0,
+  "target_processes": ["Codex", "Codex Helper", "Codex Helper (Renderer)"],
+  "target_domains": ["openai.com"]
 }
 ```
+
+### 配置项
+
+| 字段 | 说明 |
+|---|---|
+| `upstream.type` | 上游代理类型：`socks5` 或 `http` |
+| `upstream.host` | 上游代理地址（通常 `127.0.0.1`） |
+| `upstream.port` | 上游代理端口 |
+| `target_processes` | 要代理的进程名列表 |
+| `target_domains` | 要代理的域名后缀列表（匹配任何进程） |
+| `nodes` | 直连节点列表（upstream 优先） |
+| `log_level` | sing-box 日志级别：trace/debug/info/warn/error |
+
+### 路由优先级
+
+1. 私有 IP → 直连
+2. `target_domains` 匹配 → 走代理（不管哪个进程）
+3. `target_processes` 匹配 → 走代理（不管访问什么域名）
+4. 其余 → 直连
+
+## 如何找到 App 的进程名
+
+```bash
+# 方法 1：Activity Monitor 里看
+# 方法 2：命令行
+ps aux | grep -i "codex" | grep -v grep
+```
+
+常见 App 进程名：
+
+| App | 进程名 |
+|---|---|
+| Codex | `Codex`, `Codex Helper`, `Codex Helper (Renderer)`, `Codex Helper (GPU)`, `Codex Helper (Plugin)` |
+| Antigravity | `Antigravity`, `Antigravity Helper`, ... |
+| Claude | `Claude`, `Claude Helper`, `Claude Helper (Renderer)` |
+| Cursor | `Cursor`, `Cursor Helper`, `Cursor Helper (Renderer)` |
 
 ## 日志
 
 - 应用日志：`~/.antigravity-proxy/antigravity-proxy.log`
 - sing-box 日志：`~/.antigravity-proxy/singbox.log`
 - Helper 日志：`/var/log/antigravity-proxy-helper.log`
-
-## 默认代理的进程
-
-| 进程名 | 来源 |
-|---|---|
-| Antigravity | Antigravity.app 主进程 |
-| Antigravity Helper | Antigravity.app 子进程 |
-| Antigravity Helper (Renderer) | 渲染进程 |
-| language_server | AI 语言服务器 |
-| Electron | Antigravity IDE 主进程 |
-| Antigravity IDE Helper | IDE 子进程 |
-| Antigravity IDE Helper (Plugin) | 插件宿主 |
-| Antigravity IDE Helper (Renderer) | IDE 渲染 |
-| Antigravity IDE Helper (GPU) | IDE GPU |
-| language_server_macos_arm | IDE AI 语言服务器 |
 
 ## 依赖
 
