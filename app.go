@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const helperSockPath = "/var/run/antigravity-proxy.sock"
+const helperSockPath = "/var/run/funnel.sock"
 
 type HelperRequest struct {
 	Action     string `json:"action"`
@@ -138,7 +138,7 @@ func (a *App) Disconnect() {
 }
 
 func (a *App) OpenLog() {
-	logPath := filepath.Join(ConfigDir(), "antigravity-proxy.log")
+	logPath := filepath.Join(ConfigDir(), "funnel.log")
 	if err := exec.Command("open", "-a", "Console", logPath).Run(); err != nil {
 		exec.Command("open", logPath).Run()
 	}

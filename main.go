@@ -9,7 +9,7 @@ import (
 
 func main() {
 	initLogger()
-	logInfo("antigravity-proxy-mac starting")
+	logInfo("funnel starting")
 	defer func() {
 		if r := recover(); r != nil {
 			logError("PANIC: %v", r)
@@ -21,7 +21,7 @@ func main() {
 func onReady() {
 	systray.SetTemplateIcon(iconOff, iconOff)
 	systray.SetTitle("")
-	systray.SetTooltip("Antigravity Proxy")
+	systray.SetTooltip("Funnel")
 
 	app := NewApp()
 
@@ -37,7 +37,7 @@ func onReady() {
 	mReload := systray.AddMenuItem("重新加载配置", "重新读取 config.json")
 	mViewLog := systray.AddMenuItem("查看日志", "打开日志文件")
 	systray.AddSeparator()
-	mVersion := systray.AddMenuItem("Antigravity Proxy v"+Version, "")
+	mVersion := systray.AddMenuItem("Funnel v"+Version, "")
 	mVersion.Disable()
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("退出", "")
@@ -60,7 +60,7 @@ func onReady() {
 			}
 		}()
 	} else {
-		mStatus.SetTitle("[ERR] 无代理配置，请配置 ~/.antigravity-proxy/config.json")
+		mStatus.SetTitle("[ERR] 无代理配置，请配置 ~/.funnel/config.json")
 	}
 
 	go func() {
@@ -91,7 +91,7 @@ func onReady() {
 				systray.SetTemplateIcon(iconOff, iconOff)
 				mDisconnect.Hide()
 				mConnect.Show()
-				showNotification("Antigravity Proxy 已断开")
+				showNotification("Funnel 已断开")
 
 			case <-mReload.ClickedCh:
 				cfg, err := LoadConfig()
@@ -128,6 +128,6 @@ func onReady() {
 func onExit() {}
 
 func showNotification(msg string) {
-	cmd := fmt.Sprintf(`display notification "%s" with title "Antigravity Proxy"`, msg)
+	cmd := fmt.Sprintf(`display notification "%s" with title "Funnel"`, msg)
 	runOsascript(cmd)
 }

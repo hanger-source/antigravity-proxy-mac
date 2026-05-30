@@ -13,7 +13,7 @@ var logFile *os.File
 
 func initLogger() {
 	dir := ConfigDir()
-	logPath := filepath.Join(dir, "antigravity-proxy.log")
+	logPath := filepath.Join(dir, "funnel.log")
 
 	// Rotate if too large (>5MB)
 	if info, err := os.Stat(logPath); err == nil && info.Size() > 5*1024*1024 {
@@ -30,7 +30,7 @@ func initLogger() {
 	logger = log.New(logFile, "", 0)
 
 	logInfo("========================================")
-	logInfo("antigravity-proxy-mac starting")
+	logInfo("funnel starting")
 	logInfo("log file: %s", logPath)
 	logInfo("config dir: %s", dir)
 	logInfo("========================================")

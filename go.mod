@@ -1,4 +1,4 @@
-module antigravity-proxy-mac
+module funnel
 
 go 1.26.2
 

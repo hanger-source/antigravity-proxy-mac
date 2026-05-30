@@ -1,3 +1,3 @@
-module antigravity-proxy-helper
+module funnel-helper
 
 go 1.26.2

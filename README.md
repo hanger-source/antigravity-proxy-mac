@@ -1,4 +1,4 @@
-# Antigravity Proxy (macOS)
+# Funnel
 
 macOS 菜单栏工具，通过 TUN + 进程/域名路由规则，**只代理指定 App 的流量**，其余流量直连。
 
@@ -33,7 +33,7 @@ make install
 
 ## 配置
 
-配置文件：`~/.antigravity-proxy/config.json`
+配置文件：`~/.funnel/config.json`
 
 首次启动自动生成默认配置。
 
@@ -129,9 +129,9 @@ ps aux | grep -i "codex" | grep -v grep
 
 ## 日志
 
-- 应用日志：`~/.antigravity-proxy/antigravity-proxy.log`
-- sing-box 日志：`~/.antigravity-proxy/singbox.log`
-- Helper 日志：`/var/log/antigravity-proxy-helper.log`
+- 应用日志：`~/.funnel/funnel.log`
+- sing-box 日志：`~/.funnel/singbox.log`
+- Helper 日志：`/var/log/funnel-helper.log`
 
 ## 依赖
 

@@ -79,7 +79,7 @@ var DefaultTargetDomains = []string{
 
 func ConfigDir() string {
 	home, _ := os.UserHomeDir()
-	dir := filepath.Join(home, ".antigravity-proxy")
+	dir := filepath.Join(home, ".funnel")
 	os.MkdirAll(dir, 0755)
 	return dir
 }

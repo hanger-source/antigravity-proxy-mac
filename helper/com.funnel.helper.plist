@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.antigravity-proxy.helper</string>
+    <string>com.funnel.helper</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/antigravity-proxy-helper</string>
+        <string>/usr/local/bin/funnel-helper</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -23,8 +23,8 @@
         <integer>10240</integer>
     </dict>
     <key>StandardErrorPath</key>
-    <string>/var/log/antigravity-proxy-helper.log</string>
+    <string>/var/log/funnel-helper.log</string>
     <key>StandardOutPath</key>
-    <string>/var/log/antigravity-proxy-helper.log</string>
+    <string>/var/log/funnel-helper.log</string>
 </dict>
 </plist>

@@ -58,8 +58,8 @@ import (
 )
 
 const (
-	helperInstallPath = "/usr/local/bin/antigravity-proxy-helper"
-	plistInstallPath  = "/Library/LaunchDaemons/com.antigravity-proxy.helper.plist"
+	helperInstallPath = "/usr/local/bin/funnel-helper"
+	plistInstallPath  = "/Library/LaunchDaemons/com.funnel.helper.plist"
 )
 
 func fileHash(path string) []byte {
@@ -80,7 +80,7 @@ func isHelperInstalled() bool {
 		return false
 	}
 	logInfo("helper binary exists at %s", helperInstallPath)
-	out, _ := exec.Command("launchctl", "print", "system/com.antigravity-proxy.helper").CombinedOutput()
+	out, _ := exec.Command("launchctl", "print", "system/com.funnel.helper").CombinedOutput()
 	if strings.Contains(string(out), "Could not find") {
 		logInfo("helper daemon not loaded in launchd")
 		return false
@@ -102,14 +102,14 @@ func isHelperInstalled() bool {
 
 func findBundledHelper() string {
 	candidates := []string{
-		filepath.Join(getAppResourcesDir(), "antigravity-proxy-helper"),
+		filepath.Join(getAppResourcesDir(), "funnel-helper"),
 	}
 	exePath, _ := os.Executable()
 	if exePath != "" {
-		candidates = append(candidates, filepath.Join(filepath.Dir(exePath), "..", "Resources", "antigravity-proxy-helper"))
+		candidates = append(candidates, filepath.Join(filepath.Dir(exePath), "..", "Resources", "funnel-helper"))
 	}
 	home, _ := os.UserHomeDir()
-	candidates = append(candidates, filepath.Join(home, "projects", "antigravity-proxy-mac", "helper", "antigravity-proxy-helper"))
+	candidates = append(candidates, filepath.Join(home, "projects", "funnel", "helper", "funnel-helper"))
 	for _, c := range candidates {
 		if _, err := os.Stat(c); err == nil {
 			logInfo("found bundled helper at %s", c)
@@ -129,11 +129,11 @@ func installHelperIfNeeded() error {
 
 	helperSrc := findBundledHelper()
 	if helperSrc == "" {
-		return fmt.Errorf("helper binary not found (build it first: cd helper && go build -o antigravity-proxy-helper .)")
+		return fmt.Errorf("helper binary not found (build it first: cd helper && go build -o funnel-helper .)")
 	}
 
 	// Find plist
-	plistSrc := filepath.Join(filepath.Dir(helperSrc), "com.antigravity-proxy.helper.plist")
+	plistSrc := filepath.Join(filepath.Dir(helperSrc), "com.funnel.helper.plist")
 	if _, err := os.Stat(plistSrc); err != nil {
 		return fmt.Errorf("helper plist not found at %s", plistSrc)
 	}
@@ -148,7 +148,7 @@ func installHelperIfNeeded() error {
 			`launchctl bootstrap system "%s" 2>/dev/null || launchctl load -w "%s"`,
 		helperSrc, helperInstallPath, helperInstallPath, helperInstallPath,
 		plistSrc, plistInstallPath, plistInstallPath, plistInstallPath,
-		"com.antigravity-proxy.helper",
+		"com.funnel.helper",
 		plistInstallPath, plistInstallPath,
 	)
 

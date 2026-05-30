@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const sockPath = "/var/run/antigravity-proxy.sock"
+const sockPath = "/var/run/funnel.sock"
 
 type Request struct {
 	Action     string `json:"action"` // start, stop, status
@@ -47,7 +47,7 @@ func main() {
 	os.Chmod(sockPath, 0660)
 	exec.Command("chgrp", "staff", sockPath).Run()
 
-	fmt.Println("antigravity-proxy-helper started, listening on", sockPath)
+	fmt.Println("funnel-helper started, listening on", sockPath)
 
 	// Handle shutdown
 	sigCh := make(chan os.Signal, 1)
@@ -157,7 +157,7 @@ func stopSingBox() {
 		singboxCmd = nil
 	}
 	// Also kill any orphaned sing-box
-	exec.Command("pkill", "-f", "sing-box.*antigravity").Run()
+	exec.Command("pkill", "-f", "sing-box.*funnel").Run()
 }
 
 func sendResponse(conn net.Conn, ok bool, msg string) {
@@ -166,7 +166,7 @@ func sendResponse(conn net.Conn, ok bool, msg string) {
 
 func isAllowedBinary(path string) bool {
 	allowed := []string{
-		"/.antigravity-proxy/sing-box",
+		"/.funnel/sing-box",
 		"/.tun-proxy/sing-box",
 		"/usr/local/bin/sing-box",
 	}
