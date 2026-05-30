@@ -94,11 +94,16 @@ func LoadConfig() (*Config, error) {
 	}
 	data, err := os.ReadFile(ConfigPath())
 	if err != nil {
-		// No config yet, generate default
-		c.Upstream = &UpstreamProxy{
-			Type: "socks5",
-			Host: "127.0.0.1",
-			Port: 13658,
+		// No config yet, auto-detect proxy and generate default
+		if detected := detectSystemProxy(); detected != nil {
+			c.Upstream = &UpstreamProxy{
+				Type: detected.Type,
+				Host: detected.Host,
+				Port: detected.Port,
+			}
+			logInfo("auto-detected upstream proxy: %s %s:%d (%s)", detected.Type, detected.Host, detected.Port, detected.Source)
+		} else {
+			logWarn("no system proxy detected, upstream not configured")
 		}
 		c.TargetProcesses = DefaultTargetProcesses
 		c.TargetDomains = DefaultTargetDomains
