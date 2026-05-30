@@ -6,7 +6,14 @@ import (
 	"path/filepath"
 )
 
-// NodeConfig defines a proxy node (vmess/shadowsocks)
+// UpstreamProxy defines a local proxy to forward traffic to (e.g. V2RayX, Clash)
+type UpstreamProxy struct {
+	Type string `json:"type"` // "socks5" or "http"
+	Host string `json:"host"` // e.g. "127.0.0.1"
+	Port int    `json:"port"` // e.g. 13658
+}
+
+// NodeConfig defines a direct proxy node (vmess/shadowsocks)
 type NodeConfig struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`     // "vmess" or "shadowsocks"
@@ -20,20 +27,27 @@ type NodeConfig struct {
 
 // Config is the main configuration
 type Config struct {
-	Nodes        []NodeConfig `json:"nodes"`
-	SelectedNode int          `json:"selected_node"`
-	SubscribeURL string       `json:"subscribe_url,omitempty"`
+	// Upstream local proxy (preferred over Nodes if set)
+	Upstream *UpstreamProxy `json:"upstream,omitempty"`
+
+	// Direct nodes (fallback if upstream is not set)
+	Nodes        []NodeConfig `json:"nodes,omitempty"`
+	SelectedNode int          `json:"selected_node,omitempty"`
 
 	// TargetProcesses lists process names to proxy.
-	// Default: Antigravity-related processes.
 	TargetProcesses []string `json:"target_processes,omitempty"`
+
+	// TargetDomains lists domain suffixes to proxy (in addition to process matching).
+	// Traffic to these domains will be proxied regardless of which process sends it.
+	TargetDomains []string `json:"target_domains,omitempty"`
 
 	// LogLevel for sing-box: trace/debug/info/warn/error
 	LogLevel string `json:"log_level,omitempty"`
 }
 
-// DefaultTargetProcesses are the Antigravity-related process names on macOS
+// DefaultTargetProcesses — Antigravity + Codex
 var DefaultTargetProcesses = []string{
+	// Antigravity
 	"Antigravity",
 	"Antigravity Helper",
 	"Antigravity Helper (Renderer)",
@@ -45,6 +59,22 @@ var DefaultTargetProcesses = []string{
 	"Antigravity IDE Helper (Renderer)",
 	"Antigravity IDE Helper (GPU)",
 	"language_server_macos_arm",
+	// Codex
+	"Codex",
+	"Codex Helper",
+	"Codex Helper (Renderer)",
+	"Codex Helper (GPU)",
+	"Codex Helper (Plugin)",
+}
+
+// DefaultTargetDomains — OpenAI auth & API domains
+var DefaultTargetDomains = []string{
+	"openai.com",
+	"auth.openai.com",
+	"api.openai.com",
+	"chatgpt.com",
+	"oaistatic.com",
+	"oaiusercontent.com",
 }
 
 func ConfigDir() string {
@@ -64,7 +94,15 @@ func LoadConfig() (*Config, error) {
 	}
 	data, err := os.ReadFile(ConfigPath())
 	if err != nil {
-		// No config yet
+		// No config yet, generate default
+		c.Upstream = &UpstreamProxy{
+			Type: "socks5",
+			Host: "127.0.0.1",
+			Port: 13658,
+		}
+		c.TargetProcesses = DefaultTargetProcesses
+		c.TargetDomains = DefaultTargetDomains
+		c.Save()
 		return c, nil
 	}
 	if err := json.Unmarshal(data, c); err != nil {
@@ -89,4 +127,15 @@ func (c *Config) GetTargetProcesses() []string {
 		return c.TargetProcesses
 	}
 	return DefaultTargetProcesses
+}
+
+func (c *Config) GetTargetDomains() []string {
+	if len(c.TargetDomains) > 0 {
+		return c.TargetDomains
+	}
+	return DefaultTargetDomains
+}
+
+func (c *Config) HasUpstream() bool {
+	return c.Upstream != nil && c.Upstream.Host != "" && c.Upstream.Port > 0
 }
