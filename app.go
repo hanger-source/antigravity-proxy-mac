@@ -54,8 +54,8 @@ func (a *App) Connect() error {
 
 	logInfo("=== CONNECT START ===")
 
-	if len(a.Cfg.Nodes) == 0 {
-		return fmt.Errorf("无节点，请先配置 %s", ConfigPath())
+	if !a.Cfg.HasUpstream() && len(a.Cfg.Nodes) == 0 {
+		return fmt.Errorf("无代理配置，请先配置 %s", ConfigPath())
 	}
 
 	// Ensure helper is installed
@@ -142,6 +142,16 @@ func (a *App) OpenLog() {
 	if err := exec.Command("open", "-a", "Console", logPath).Run(); err != nil {
 		exec.Command("open", logPath).Run()
 	}
+}
+
+func (a *App) connectionLabel() string {
+	if a.Cfg.HasUpstream() {
+		return fmt.Sprintf("%s://%s:%d", a.Cfg.Upstream.Type, a.Cfg.Upstream.Host, a.Cfg.Upstream.Port)
+	}
+	if len(a.Cfg.Nodes) > 0 && a.Cfg.SelectedNode < len(a.Cfg.Nodes) {
+		return a.Cfg.Nodes[a.Cfg.SelectedNode].Name
+	}
+	return "unknown"
 }
 
 func (a *App) findSingBox() string {

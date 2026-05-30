@@ -43,7 +43,7 @@ func onReady() {
 	mQuit := systray.AddMenuItem("退出", "")
 
 	// Auto-connect on startup
-	if len(app.Cfg.Nodes) > 0 {
+	if app.Cfg.HasUpstream() || len(app.Cfg.Nodes) > 0 {
 		go func() {
 			mStatus.SetTitle("连接中...")
 			err := app.Connect()
@@ -51,24 +51,24 @@ func onReady() {
 				mStatus.SetTitle("[ERR] " + err.Error())
 				logError("auto-connect failed: %v", err)
 			} else {
-				node := app.Cfg.Nodes[app.Cfg.SelectedNode]
-				mStatus.SetTitle("[ON] " + node.Name)
+				label := app.connectionLabel()
+				mStatus.SetTitle("[ON] " + label)
 				systray.SetTemplateIcon(iconOn, iconOn)
 				mConnect.Hide()
 				mDisconnect.Show()
-				showNotification("已连接: " + node.Name)
+				showNotification("已连接: " + label)
 			}
 		}()
 	} else {
-		mStatus.SetTitle("[ERR] 无节点，请配置 ~/.antigravity-proxy/config.json")
+		mStatus.SetTitle("[ERR] 无代理配置，请配置 ~/.antigravity-proxy/config.json")
 	}
 
 	go func() {
 		for {
 			select {
 			case <-mConnect.ClickedCh:
-				if len(app.Cfg.Nodes) == 0 {
-					mStatus.SetTitle("[ERR] 无节点，请配置 config.json")
+				if !app.Cfg.HasUpstream() && len(app.Cfg.Nodes) == 0 {
+					mStatus.SetTitle("[ERR] 无代理配置，请配置 config.json")
 					continue
 				}
 				mStatus.SetTitle("连接中...")
@@ -78,12 +78,12 @@ func onReady() {
 					logError("connect failed: %v", err)
 					continue
 				}
-				node := app.Cfg.Nodes[app.Cfg.SelectedNode]
-				mStatus.SetTitle("[ON] " + node.Name)
+				label := app.connectionLabel()
+				mStatus.SetTitle("[ON] " + label)
 				systray.SetTemplateIcon(iconOn, iconOn)
 				mConnect.Hide()
 				mDisconnect.Show()
-				showNotification("已连接: " + node.Name)
+				showNotification("已连接: " + label)
 
 			case <-mDisconnect.ClickedCh:
 				app.Disconnect()
@@ -106,8 +106,8 @@ func onReady() {
 						if err := app.Connect(); err != nil {
 							mStatus.SetTitle("[ERR] " + err.Error())
 						} else {
-							node := app.Cfg.Nodes[app.Cfg.SelectedNode]
-							mStatus.SetTitle("[ON] " + node.Name)
+							label := app.connectionLabel()
+							mStatus.SetTitle("[ON] " + label)
 						}
 					}
 					showNotification("配置已重新加载")
